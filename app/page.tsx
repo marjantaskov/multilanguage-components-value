@@ -1,103 +1,204 @@
-import Image from "next/image";
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+const locales = {
+  en: "English",
+  de: "Deutsch",
+  es: "Español",
+};
+
+const localesData = {
+  title: {
+    en: "English title",
+    de: "Deutsch title",
+    es: "Español title",
+  },
+  description: {
+    en: "English description",
+    de: "Deutsch description",
+    es: "Español description",
+  },
+};
+
+const FormSchema = z.object({
+  type: z.enum(["all", "mentions", "none"], {
+    required_error: "You need to select a notification type.",
+  }),
+});
 
 export default function Home() {
+  const [values, setValues] = useState({
+    title: { en: "", de: "", es: "" },
+    description: { en: "", de: "", es: "" },
+    input: { en: "", de: "", es: "" },
+    textarea: { en: "", de: "", es: "" },
+    type: { en: "all", de: "all", es: "all" },
+  });
+
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      type: values.type.en as "all" | "mentions" | "none",
+    },
+  });
+
+  const [locale, setLocale] = useState("en");
+
+  useEffect(() => {
+    form.reset({ type: values.type[locale] as "all" | "mentions" | "none" });
+  }, [locale, form, values.type]);
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    setValues((prev) => ({
+      ...prev,
+      type: {
+        ...prev.type,
+        [locale]: data.type,
+      },
+    }));
+    console.log(JSON.stringify(data, null, 2));
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setValues((prev) => ({
+      ...prev,
+      [name]: {
+        ...prev[name as keyof typeof prev],
+        [locale]: value,
+      },
+    }));
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+      <div>
+        {Object.entries(locales).map(([key, value]) => (
+          <p
+            key={key}
+            onClick={() => setLocale(key)}
+            className={`${key === locale ? "font-bold text-red-500" : ""}`}
+          >
+            {key} {value}
+          </p>
+        ))}
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="space-y-4">
+        <div>
+          <p>Static title: {localesData.title[locale]}</p>
+          <input
+            type="text"
+            name="title"
+            placeholder="Edit title"
+            className="block mb-2"
+            value={values.title[locale]}
+            onChange={handleInputChange}
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <hr className="my-2" />
+
+        <div>
+          <p>Static description: {localesData.description[locale]}</p>
+          <input
+            type="text"
+            name="description"
+            placeholder="Edit description"
+            className="bg-white block text-black"
+            value={values.description[locale]}
+            onChange={handleInputChange}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          <hr className="my-2" />
+          <Input
+            value={values.input[locale]}
+            onChange={handleInputChange}
+            name="input"
+            placeholder="Edit input"
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          <hr className="my-2" />
+          <Textarea
+            value={values.textarea[locale]}
+            onChange={handleInputChange}
+            name="textarea"
+            placeholder="Edit textarea"
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <hr className="my-2" />
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-2/3 space-y-6"
+            >
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Notify me about...</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="all" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            All new messages
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="mentions" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Direct messages and mentions
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="none" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Nothing</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Submit</Button>
+            </form>
+          </Form>
+        </div>
+        <hr className="my-2" />
+
+        <button
+          onClick={() => console.log(values)}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Log All Values
+        </button>
+      </div>
     </div>
   );
 }
